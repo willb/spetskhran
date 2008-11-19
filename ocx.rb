@@ -24,14 +24,39 @@ def ancestors(commit, seen)
   seen
 end
 
-# returns a set of hashes corresponding to every commit in a repo
-def all_commits(repo)
+# returns a set of hashes corresponding to every commit in a repo,
+# using ancestors (breadth-first search)
+def all_commits_bfs(repo)
   seen = [].to_set
   repo.heads.each do |head| 
     $headnm=head.name if DEBUG
     seen.merge(ancestors(head.commit, seen)) 
   end
   seen
+end
+
+# returns a set of hashes corresponding to every commit in a repo,
+# using Commit.find_all.  NB: this seems broken on medium-sized and
+# larger repositories.
+def all_commits_fa(repo)
+  seen = [].to_set
+  repo.heads.each do |head|
+    Commit.find_all(repo, head.name).each do |commit|
+      seen.add(commit.sha)
+    end
+  end
+  seen
+end
+
+# returns a set of hashes corresponding to every commit in a repo,
+# using the command-line interface exposed by a Repo object.  This is
+# by far the fastest way to get all commits.
+def all_commits_cmdln(repo)
+  repo.git.rev_list({:all => true}).split("\n")
+end
+
+def all_commits(repo)
+  all_commits_cmdln(repo)
 end
 
 repo = Repo.new(ARGV[0])
