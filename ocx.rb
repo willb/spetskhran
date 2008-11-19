@@ -13,10 +13,10 @@ DEBUG=false
 def ancestors(commit, seen)
   worklist = [commit]
   worklist.each do |cm|
-    seen.add(cm.sha)
-    print $headnm, ": ", cm, " --> ", seen.length(), "\n" if DEBUG
-    cm.parents.each do |parent| 
-      if not seen.include?(parent.sha)
+    if not seen.include?(cm.sha)
+      seen.add(cm.sha)
+      print $headnm, ": ", cm, " --> ", seen.length(), "\n" if DEBUG
+      cm.parents.each do |parent| 
         worklist << parent
       end
     end
@@ -36,4 +36,9 @@ end
 
 repo = Repo.new(ARGV[0])
 
-all_commits(repo).each {|commit| print commit, "\n"}
+total = 0
+
+all_commits(repo).each do |commit| 
+  total = total + 1
+  print commit, "; total --> ", total, "\n"
+end
