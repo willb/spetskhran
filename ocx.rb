@@ -13,22 +13,38 @@ DEBUG=false
 def ancestors(commit, seen)
   worklist = [commit]
   worklist.each do |cm|
-    seen.merge([cm].to_set)
-    print $headnm, ": ", cm, " --> ", seen.length(), "\n" if DEBUG
-    cm.parents.each {|parent| worklist << parent if not seen.include?(parent) }
+    if not seen.include?(cm.sha)
+      yield cm.sha
+      seen.add(cm.sha)
+
+      print $headnm, ": ", cm, " --> ", $seen.length(), "\n" if DEBUG
+      cm.parents.each do |parent|
+        if not seen.include?(parent.sha)
+          worklist << parent
+        end
+      end
+    end
   end
-  seen
 end
 
 def all_commits(repo)
   seen = [].to_set
   repo.heads.each do |head| 
-    $headnm=head.name if DEBUG
-    seen.merge(ancestors(head.commit, seen)) 
+    hc = head.commit
+    if not seen.include?(hc.sha)
+      ancestors(hc, seen) do |sha|
+        seen.add(sha)
+        yield sha
+      end
+    end
   end
-  seen
 end
 
 repo = Repo.new(ARGV[0])
 
-all_commits(repo).each {|commit| print commit, "\n"}
+total = 0
+
+all_commits(repo) do |sha| 
+  total = total + 1
+  print sha, "; total --> " , total, "\n"
+end
