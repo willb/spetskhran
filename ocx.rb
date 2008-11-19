@@ -13,13 +13,18 @@ DEBUG=false
 def ancestors(commit, seen)
   worklist = [commit]
   worklist.each do |cm|
-    seen.merge([cm].to_set)
+    seen.add(cm.sha)
     print $headnm, ": ", cm, " --> ", seen.length(), "\n" if DEBUG
-    cm.parents.each {|parent| worklist << parent if not seen.include?(parent) }
+    cm.parents.each do |parent| 
+      if not seen.include?(parent.sha)
+        worklist << parent
+      end
+    end
   end
   seen
 end
 
+# returns a set of hashes corresponding to every commit in a repo
 def all_commits(repo)
   seen = [].to_set
   repo.heads.each do |head| 
