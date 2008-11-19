@@ -5,19 +5,21 @@ require 'grit'
 require 'digest/sha1'
 require 'set'
 
-def ancestors(commit)
-  seen = [].to_set
+def ancestors(commit, seen)
   worklist = [commit]
-  while not worklist.empty?
-    commit = worklist.delete_at(0)
-    seen.merge([commit].to_set)
-    (commit.parents.to_set - seen).each {|parent| worklist << parent}
+  worklist.each do |cm|
+    seen.merge([cm].to_set)
+    print $headnm, ": ", cm, " --> ", seen.length(), "\n"
+    cm.parents.each {|parent| worklist << parent if not seen.include?(parent) }
   end
   seen
 end
 
 def all_commits(repo)
   seen = [].to_set
-  repo.heads.each { |head| seen = seen | ancestors(head.commit) }
+  repo.heads.each do |head| 
+    $headnm=head.name
+    seen.merge(ancestors(head.commit, seen)) 
+  end
   seen
 end
