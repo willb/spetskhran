@@ -14,14 +14,12 @@ def ancestors(commit, seen)
   worklist = [commit]
   worklist.each do |cm|
     if not seen.include?(cm.sha)
-      yield cm.sha
       seen.add(cm.sha)
+      yield cm.sha
 
       print $headnm, ": ", cm, " --> ", $seen.length(), "\n" if DEBUG
       cm.parents.each do |parent|
-        if not seen.include?(parent.sha)
-          worklist << parent
-        end
+        worklist << parent
       end
     end
   end
@@ -33,7 +31,6 @@ def all_commits(repo)
     hc = head.commit
     if not seen.include?(hc.sha)
       ancestors(hc, seen) do |sha|
-        seen.add(sha)
         yield sha
       end
     end
