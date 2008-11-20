@@ -10,6 +10,8 @@ include Grit
 
 DEBUG=false
 
+# breadth-first search for ancestors of a given commit.  ignores
+# commits already seen
 def ancestors(commit, seen)
   worklist = [commit]
   worklist.each do |cm|
@@ -28,23 +30,22 @@ end
 # using ancestors (breadth-first search)
 def all_commits_bfs(repo)
   seen = [].to_set
+  
   repo.heads.each do |head| 
     $headnm=head.name if DEBUG
     seen.merge(ancestors(head.commit, seen)) 
   end
-  seen
-end
 
-# returns a set of hashes corresponding to every commit in a repo,
-# using Commit.find_all.  NB: this seems broken on medium-sized and
-# larger repositories.
-def all_commits_fa(repo)
-  seen = [].to_set
-  repo.heads.each do |head|
-    Commit.find_all(repo, head.name).each do |commit|
-      seen.add(commit.sha)
-    end
+  repo.tags.each do |head| 
+    $headnm=head.name if DEBUG
+    seen.merge(ancestors(head.commit, seen)) 
   end
+
+  repo.remotes.each do |head| 
+    $headnm=head.name if DEBUG
+    seen.merge(ancestors(head.commit, seen)) 
+  end
+
   seen
 end
 
@@ -56,7 +57,7 @@ def all_commits_cmdln(repo)
 end
 
 def all_commits(repo)
-  all_commits_cmdln(repo)
+  all_commits_bfs(repo)
 end
 
 repo = Repo.new(ARGV[0])
